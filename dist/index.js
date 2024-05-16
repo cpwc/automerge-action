@@ -1383,16 +1383,27 @@ async function mergePullRequest(
   commitMessage
 ) {
   try {
-    await octokit.pulls.merge({
-      owner: pullRequest.base.repo.owner.login,
-      repo: pullRequest.base.repo.name,
-      pull_number: pullRequest.number,
-      commit_title: commitMessage,
-      commit_message: "",
-      sha: head,
-      merge_method: mergeMethod
-    });
-    return "success";
+    if (mergeMethod === "ff-only") {
+      await octokit.rest.git.updateRef({
+        owner: pullRequest.base.repo.owner.login,
+        repo: pullRequest.base.repo.name,
+        ref: `heads/${pullRequest.base.ref}`,
+        sha: head,
+        force: false
+      });
+      return "success";
+    } else {
+      await octokit.pulls.merge({
+        owner: pullRequest.base.repo.owner.login,
+        repo: pullRequest.base.repo.name,
+        pull_number: pullRequest.number,
+        commit_title: commitMessage,
+        commit_message: "",
+        sha: head,
+        merge_method: mergeMethod
+      });
+      return "success";
+    }
   } catch (e) {
     return checkMergeError(e);
   }
@@ -40705,7 +40716,7 @@ module.exports = parseParams
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"automerge-action","version":"0.16.3","description":"GitHub action to automatically merge pull requests","main":"lib/api.js","author":"Pascal","license":"MIT","private":true,"bin":{"automerge-action":"./bin/automerge.js"},"scripts":{"test":"jest","it":"node it/it.js","lint":"prettier -l lib/** test/** && eslint .","compile":"ncc build bin/automerge.js --license LICENSE -o dist","prepublish":"yarn lint && yarn test && yarn compile"},"dependencies":{"@actions/core":"^1.10.1","@octokit/rest":"^20.1.0","argparse":"^2.0.1","fs-extra":"^11.2.0","object-resolve-path":"^1.1.1","tmp":"^0.2.3"},"devDependencies":{"@vercel/ncc":"^0.38.1","dotenv":"^16.4.5","eslint":"^9.0.0","eslint-plugin-jest":"^28.2.0","globals":"^15.0.0","jest":"^29.7.0","prettier":"^3.2.5"},"prettier":{"trailingComma":"none","arrowParens":"avoid"}}');
+module.exports = JSON.parse('{"name":"automerge-action","version":"0.17.0","description":"GitHub action to automatically merge pull requests","main":"lib/api.js","author":"Pascal","license":"MIT","private":true,"bin":"./bin/automerge.js","scripts":{"test":"jest","it":"node it/it.js","lint":"prettier -l lib/** test/** && eslint .","compile":"ncc build bin/automerge.js --license LICENSE -o dist","prepublish":"yarn lint && yarn test && yarn compile"},"dependencies":{"@actions/core":"^1.10.1","@octokit/rest":"^20.1.0","argparse":"^2.0.1","fs-extra":"^11.2.0","object-resolve-path":"^1.1.1","tmp":"^0.2.3"},"devDependencies":{"@vercel/ncc":"^0.38.1","dotenv":"^16.4.5","eslint":"^9.0.0","eslint-plugin-jest":"^28.2.0","globals":"^15.0.0","jest":"^29.7.0","prettier":"^3.2.5"},"prettier":{"trailingComma":"none","arrowParens":"avoid"}}');
 
 /***/ })
 
